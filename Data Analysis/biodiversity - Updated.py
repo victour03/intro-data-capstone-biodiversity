@@ -13,7 +13,7 @@
 # - `from matplotlib import pyplot as plt`
 # - `import pandas as pd`
 
-# In[1]:
+# In[8]:
 
 
 from matplotlib import pyplot as plt
@@ -29,7 +29,7 @@ import pandas as pd
 # Load the dataset and inspect it:
 # - Load `species_info.csv` into a DataFrame called `species`
 
-# In[2]:
+# In[9]:
 
 
 species = pd.read_csv('species_info.csv')
@@ -38,7 +38,7 @@ species
 
 # Inspect each DataFrame using `.head()`.
 
-# In[3]:
+# In[10]:
 
 
 species.head(5)
@@ -49,7 +49,7 @@ species.head(5)
 
 # How many different species are in the `species` DataFrame?
 
-# In[4]:
+# In[11]:
 
 
 species.scientific_name.nunique()
@@ -57,7 +57,7 @@ species.scientific_name.nunique()
 
 # What are the different values of `category` in `species`?
 
-# In[5]:
+# In[12]:
 
 
 species.category.unique()
@@ -65,7 +65,7 @@ species.category.unique()
 
 # What are the different values of `conservation_status`?
 
-# In[6]:
+# In[13]:
 
 
 species.conservation_status.unique()
@@ -82,7 +82,7 @@ species.conservation_status.unique()
 # 
 # We'd like to count up how many species meet each of these criteria.  Use `groupby` to count how many `scientific_name` meet each of these criteria.
 
-# In[7]:
+# In[14]:
 
 
 species.groupby('conservation_status').scientific_name.nunique().reset_index()
@@ -95,7 +95,7 @@ species.groupby('conservation_status').scientific_name.nunique().reset_index()
 # species.fillna('No Intervention', inplace=True)
 # ```
 
-# In[8]:
+# In[15]:
 
 
 species.fillna('No Intervention', inplace=True)
@@ -103,7 +103,7 @@ species.fillna('No Intervention', inplace=True)
 
 # Great! Now run the same `groupby` as before to see how many species require `No Intervention`.
 
-# In[9]:
+# In[16]:
 
 
 species.groupby('conservation_status').scientific_name.nunique().reset_index()
@@ -118,10 +118,10 @@ species.groupby('conservation_status').scientific_name.nunique().reset_index()
 #     .sort_values(by='scientific_name')
 # ```
 
-# In[10]:
+# In[17]:
 
 
-protection_counts = species.groupby('conservation_status').scientific_name.count().reset_index().sort_values(by='scientific_name')
+protection_counts = species.groupby('conservation_status').scientific_name.nunique().reset_index().sort_values(by='scientific_name')
 protection_counts
 
 
@@ -135,7 +135,7 @@ protection_counts
 # 6. Title the graph `Conservation Status by Species`
 # 7. Plot the grap using `plt.show()`
 
-# In[11]:
+# In[18]:
 
 
 plt.figure(figsize=(10, 4))
@@ -154,24 +154,23 @@ plt.show()
 
 # Let's create a new column in `species` called `is_protected`, which is `True` if `conservation_status` is not equal to `No Intervention`, and `False` otherwise.
 
-# In[12]:
+# In[19]:
 
 
-species['is_protected'] = species['conservation_status'].apply(lambda x: 'true' if x!= 'No Intervention' else 'false')
-species
+species['is_protected'] = species.conservation_status != 'No Intervention'
 
 
 # Let's group by *both* `category` and `is_protected`.  Save your results to `category_counts`.
 
-# In[13]:
+# In[20]:
 
 
-category_counts =species.groupby(['category', 'is_protected']).scientific_name.count().reset_index()
+category_counts = species.groupby(['category', 'is_protected'])                         .scientific_name.nunique().reset_index()
 
 
 # Examine `category_counts` using `head()`.
 
-# In[14]:
+# In[21]:
 
 
 category_counts.head()
@@ -184,7 +183,7 @@ category_counts.head()
 # 
 # Save your pivoted data to `category_pivot`. Remember to `reset_index()` at the end.
 
-# In[15]:
+# In[22]:
 
 
 category_pivot = category_counts.pivot(
@@ -196,7 +195,7 @@ category_pivot
 
 # Examine `category_pivot`.
 
-# In[16]:
+# In[23]:
 
 
 category_pivot.columns = ['category','not_protected', 'protected']
@@ -208,7 +207,7 @@ category_pivot
 # - Rename `False` to `not_protected`
 # - Rename `True` to `protected`
 
-# In[17]:
+# In[24]:
 
 
 category_pivot['percent_protected']=category_pivot['protected']/(category_pivot['protected'] + category_pivot['not_protected'])
@@ -216,7 +215,7 @@ category_pivot['percent_protected']=category_pivot['protected']/(category_pivot[
 
 # Let's create a new column of `category_pivot` called `percent_protected`, which is equal to `protected` (the number of species that are protected) divided by `protected` plus `not_protected` (the total number of species).
 
-# In[18]:
+# In[25]:
 
 
 category_pivot
@@ -239,7 +238,7 @@ category_pivot
 # 
 # Create a table called `contingency` and fill it in with the correct numbers
 
-# In[19]:
+# In[26]:
 
 
 from scipy.stats import chi2_contingency
@@ -250,29 +249,41 @@ from scipy.stats import chi2_contingency
 # from scipy.stats import chi2_contingency
 # ```
 
-# In[20]:
+# In[52]:
 
 
-contingency = [176, 38], [442, 79]
+contingency = [[30, 146], [75, 413]]
 
 
 # Now run `chi2_contingency` with `contingency`.
 
-# In[21]:
+# In[58]:
 
 
-chi2_contingency(contingency)
+pval = chi2_contingency(contingency)[1]
+print (pval)
+
+if pval < 0.05:
+    print ("There is significant difference between mammals and birds")
+else:
+    print ("There is no significant difference between mammals and birds")
 
 
 # It looks like this difference isn't significant!
 # 
 # Let's test another.  Is the difference between `Reptile` and `Mammal` significant?
 
-# In[22]:
+# In[57]:
 
 
-contingency = [176, 38], [74, 5]
-chi2_contingency(contingency)
+contingency_rep_mammal = [30, 146], [5, 73]
+pval_rep_mammal = chi2_contingency(contingency_rep_mammal)[1]
+pval_rep_mammal
+
+if pval_rep_mammal  < 0.05:
+    print ("There is significant difference between mammals and reptile")
+else:
+    print ("There is no significant difference between mammals and reptile")
 
 
 # Yes! It looks like there is a significant difference between `Reptile` and `Mammal`!
@@ -281,7 +292,7 @@ chi2_contingency(contingency)
 
 # Conservationists have been recording sightings of different species at several national parks for the past 7 days.  They've saved sent you their observations in a file called `observations.csv`.  Load `observations.csv` into a variable called `observations`, then use `head` to view the data.
 
-# In[23]:
+# In[69]:
 
 
 observations = pd.read_csv('observations.csv')
@@ -290,7 +301,7 @@ observations.head()
 
 # Some scientists are studying the number of sheep sightings at different national parks.  There are several different scientific names for different types of sheep.  We'd like to know which rows of `species` are referring to sheep.  Notice that the following code will tell us whether or not a word occurs in a string:
 
-# In[24]:
+# In[70]:
 
 
 # Does "Sheep" occur in this string?
@@ -298,7 +309,7 @@ str1 = 'This string contains Sheep'
 'Sheep' in str1
 
 
-# In[25]:
+# In[71]:
 
 
 # Does "Sheep" occur in this string?
@@ -308,36 +319,36 @@ str2 = 'This string contains Cows'
 
 # Use `apply` and a `lambda` function to create a new column in `species` called `is_sheep` which is `True` if the `common_names` contains `'Sheep'`, and `False` otherwise.
 
-# In[26]:
+# In[72]:
 
 
-species['is_sheep'] = species['common_names'].apply(lambda x: 'true' if 'Sheep' in x else 'false')
-species
+species['is_sheep'] = species.common_names.apply(lambda x: 'Sheep' in x)
+species.head()
 
 
 # Select the rows of `species` where `is_sheep` is `True` and examine the results.
 
-# In[27]:
+# In[73]:
 
 
-species.loc[species['is_sheep'] == 'true']
+species.loc[species['is_sheep'] == True]
 
 
 # Many of the results are actually plants.  Select the rows of `species` where `is_sheep` is `True` and `category` is `Mammal`.  Save the results to the variable `sheep_species`.
 
-# In[29]:
+# In[74]:
 
 
-sheep_species = species[(species.is_sheep == 'true') & (species.category == 'Mammal')]
+sheep_species = species[(species.is_sheep == True) & (species.category == 'Mammal')]
 sheep_species
 
 
 # Now merge `sheep_species` with `observations` to get a DataFrame with observations of sheep.  Save this DataFrame as `sheep_observations`.
 
-# In[37]:
+# In[75]:
 
 
-sheep_observations = pd.merge(sheep_species,observations, on = 'scientific_name')
+sheep_observations = observations.merge(sheep_species)
 sheep_observations
 
 
@@ -345,7 +356,7 @@ sheep_observations
 # 
 # This is the total number of sheep observed in each park over the past 7 days.
 
-# In[39]:
+# In[76]:
 
 
 obs_by_park = sheep_observations.groupby('park_name').observations.sum().reset_index()
